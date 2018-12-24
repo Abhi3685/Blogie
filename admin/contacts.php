@@ -3,6 +3,12 @@ include "../db.php";
 if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     echo "<script>window.location.href='/';</script>";
 } 
+if(isset($_GET['remove'])){
+    $query_id = $_GET['remove'];
+    $query = "DELETE FROM contact_us WHERE id = $query_id";
+    $delete_query = mysqli_query($conn, $query);
+    echo "<script>window.location.href='contacts.php';</script>";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +23,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
     <!-- Title Page-->
     <link rel="icon" href="http://pngimg.com/uploads/letter_b/letter_b_PNG13.png" sizes="16x16" type="image/png">
-    <title>Dashboard</title>
+    <title>Dashboard: Queries Listing</title>
 
     <!-- Fontfaces CSS-->
     <link href="css/font-face.css" rel="stylesheet" media="all">
@@ -40,16 +46,18 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Main CSS-->
     <link href="css/theme.css" rel="stylesheet" media="all">
     <style>
-        .pager{
+        .pagination{
             margin-top: 30px;
-            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .page-number{
+        .paglink{
             margin: 0px 5px;
             cursor: pointer;
             padding: 10px 16px;
             background-color: lightgrey;
             border-radius: 5px;
+            color: black;
         }
         .table-responsive{
             height: 100%;
@@ -89,7 +97,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
 </head>
 
-<body class="animsition">
+<body>
 
 <div id="overlay">
     <div id="text" class="text-justify">
@@ -97,6 +105,29 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
         <p>Please login on desktop or laptop to continue.</p>
     </div>
 </div>
+
+<!-- Modal -->
+<div id="ans_query_modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Reply To Query</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea class="form-control" rows="5" placeholder="Answer the query here ..." id="mail_body"></textarea>
+        <input type="text" id="receiver_mail" hidden>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="send_mail();">Submit Reply</button>
+        <button type="button" class="btn btn-default" onclick="location.reload();">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>     
 
     <div class="page-wrapper">
         <!-- HEADER MOBILE-->
@@ -154,7 +185,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
             <div class="menu-sidebar__content js-scrollbar1">
                 <nav class="navbar-sidebar">
                     <ul class="list-unstyled navbar__list">
-                        <li class="active has-sub">
+                        <li class="has-sub">
                             <a href ="index.php" class="js-arrow">
                                 <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                         </li>
@@ -170,7 +201,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
                             <a href="categories.php">
                                 <i class="zmdi zmdi-view-list-alt"></i>Category Listing</a>
                         </li>
-                        <li>
+                        <li class="active">
                             <a href="contacts.php">
                                 <i class="fas fa-question"></i>Queries Listing</a>
                         </li>
@@ -182,7 +213,6 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
         <!-- PAGE CONTAINER-->
         <div class="page-container" style="background-color: #f5f5f5;">
-            <!-- HEADER DESKTOP-->
             <header class="header-desktop" style="left: 251px;">
                 <div class="section__content section__content--p30">
                     <div class="container-fluid">
@@ -230,104 +260,51 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
                     <div class="container-fluid">
                         <div class="row" style="margin-bottom: 40px;">
                             <div class="col-md-12">
-                                <h2 class="text-center">Administration Dashboard : Overview</h2>
+                                <h2 class="text-center">Administration Dashboard : Queries Listing</h2>
                             </div>
                         </div>
-                        <div class="row m-t-25">
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c1">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-calendar-note"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM posts";
-                                                    $posts = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($posts);
-                                                ?></h2>
-                                                <span>Total Posts</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="row" style="padding-bottom: 40px;">
+                            <div class="table-responsive" style="background-color: #fff;">
+                              <table class="table table-hover">
+                                <thead class="thead-dark">
+                                  <tr>
+                                    <th class="text-center">Id</th>
+                                    <th class="text-center">Email</th>
+                                    <th class="text-center">Subject</th>
+                                    <th class="text-center">Message</th>
+                                    <th class="text-center">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                        $query = "SELECT * FROM contact_us";
+                                        $queries = mysqli_query($conn, $query);
+                                        while($row = mysqli_fetch_assoc($queries)){
+                                            $count = $count + 1;
+                                            $email = $row['email'];
+                                            $sub = $row['subject'];
+                                            $msg = $row['message'];
+                                            $id = $row['id'];
+                                    ?>
+                                  <tr>
+                                    <td class="text-center"><?php echo $count; ?></td>
+                                    <td class="text-center"><?php echo $email; ?></td>
+                                    <td class="text-center"><?php echo $sub; ?></td>
+                                    <td class="text-center"><?php echo $msg; ?></td>
+                                    <td class="text-center">
+                                        <button onclick="answer_query('<?php echo $email; ?>');" class="btn btn-primary">Answer Query</button>
+                                        <button onclick="remove_query('<?php echo $id; ?>');" class="btn btn-danger">Remove Query</button>
+                                    </td>
+                                  </tr>
+                                    <?php } ?>
+                                </tbody>
+                              </table>
                             </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c2">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-thumb-up"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $likes = 0; 
-                                                    while($row = mysqli_fetch_assoc($posts)){
-                                                        $likes += $row['likes'];
-                                                    }
-                                                    echo $likes;
-                                                ?></h2>
-                                                <span>Total Likes</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c3" >
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-comments"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM comments";
-                                                    $comments = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($comments);
-                                                ?></h2>
-                                                <span>Total Comments</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c4">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-account"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM users";
-                                                    $users = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($users);
-                                                ?></h2>
-                                                <span>Total Members</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row m-t-20" style="width: 100%;">    
-                                    <div class="row text-center" style="width: 100%;">
-                                        <div class="col-md-12">
-                                            <div class="copyright">
-                                                <p>Copyright © Blogie. All rights reserved.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- END MAIN CONTENT-->
-            <!-- END PAGE CONTAINER-->
-        </div>
-
+    </div>
     </div>
 
     <!-- Jquery JS-->
@@ -338,8 +315,8 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Vendor JS       -->
     <script src="vendor/slick/slick.min.js">
     </script>
-    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/animsition/animsition.min.js"></script>
+    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
     </script>
     <script src="vendor/counter-up/jquery.waypoints.min.js"></script>
@@ -353,6 +330,37 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
     <!-- Main JS-->
     <script src="js/main.js"></script>
+    <script>
+        function remove_query(id){
+            window.location.href='contacts.php?remove='+id;
+        }
+        function answer_query(email){
+            $("#receiver_mail").val(email);
+            $("#ans_query_modal").modal('show');
+        }
+        function send_mail(){
+            $("#ans_query_modal").modal('hide');
+            var email = $("#receiver_mail").val();
+            var msg = $("#mail_body").val();
+            var subject = "Reply to your query on Blogie";
+            if(email != '' && msg != ''){
+                $.ajax({
+                    url: "../send_mail.php",
+                    type: "POST",
+                    data: { email: email, msg: msg, sub: subject },
+                    success: function(res){
+                        if(res == 1){
+                            alert('Mail Sent');
+                        } else {
+                            alert('Oops! please try again!');
+                        }
+                    }
+                });
+            } else {
+                alert('Invalid Submit.');
+            }
+        }
+    </script>
 
 </body>
 

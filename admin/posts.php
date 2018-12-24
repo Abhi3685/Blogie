@@ -3,6 +3,20 @@ include "../db.php";
 if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     echo "<script>window.location.href='/';</script>";
 } 
+if(isset($_GET['approve'])){
+    $post_id = $_GET['approve'];
+    $page = $_GET['page'];
+    $query = "UPDATE posts SET status = 'Approved' WHERE id = $post_id";
+    $approve_post = mysqli_query($conn, $query);
+    echo "<script>window.location.href='posts.php?page=".$page."';</script>";
+}
+if(isset($_GET['disapprove'])){
+    $post_id = $_GET['disapprove'];
+    $page = $_GET['page'];
+    $query = "UPDATE posts SET status = 'Disapproved' WHERE id = $post_id";
+    $disapprove_post = mysqli_query($conn, $query);
+    echo "<script>window.location.href='posts.php?page=".$page."';</script>";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +31,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
     <!-- Title Page-->
     <link rel="icon" href="http://pngimg.com/uploads/letter_b/letter_b_PNG13.png" sizes="16x16" type="image/png">
-    <title>Dashboard</title>
+    <title>Dashboard: Posts Listing</title>
 
     <!-- Fontfaces CSS-->
     <link href="css/font-face.css" rel="stylesheet" media="all">
@@ -40,16 +54,18 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Main CSS-->
     <link href="css/theme.css" rel="stylesheet" media="all">
     <style>
-        .pager{
+        .pagination{
             margin-top: 30px;
-            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .page-number{
+        .paglink{
             margin: 0px 5px;
             cursor: pointer;
             padding: 10px 16px;
             background-color: lightgrey;
             border-radius: 5px;
+            color: black;
         }
         .table-responsive{
             height: 100%;
@@ -89,14 +105,14 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
 </head>
 
-<body class="animsition">
+<body>
 
 <div id="overlay">
     <div id="text" class="text-justify">
         <p>Personalized dashboard is not accessible on small scale devices.</p>
         <p>Please login on desktop or laptop to continue.</p>
     </div>
-</div>
+</div>      
 
     <div class="page-wrapper">
         <!-- HEADER MOBILE-->
@@ -154,11 +170,11 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
             <div class="menu-sidebar__content js-scrollbar1">
                 <nav class="navbar-sidebar">
                     <ul class="list-unstyled navbar__list">
-                        <li class="active has-sub">
+                        <li class="has-sub">
                             <a href ="index.php" class="js-arrow">
                                 <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                         </li>
-                        <li>
+                        <li class="active">
                             <a href="posts.php">
                                 <i class="zmdi zmdi-calendar-note"></i>Posts Listing</a>
                         </li>
@@ -182,7 +198,6 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
         <!-- PAGE CONTAINER-->
         <div class="page-container" style="background-color: #f5f5f5;">
-            <!-- HEADER DESKTOP-->
             <header class="header-desktop" style="left: 251px;">
                 <div class="section__content section__content--p30">
                     <div class="container-fluid">
@@ -230,104 +245,71 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
                     <div class="container-fluid">
                         <div class="row" style="margin-bottom: 40px;">
                             <div class="col-md-12">
-                                <h2 class="text-center">Administration Dashboard : Overview</h2>
+                                <h2 class="text-center">Administration Dashboard : Posts Listing</h2>
                             </div>
                         </div>
-                        <div class="row m-t-25">
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c1">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-calendar-note"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM posts";
-                                                    $posts = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($posts);
-                                                ?></h2>
-                                                <span>Total Posts</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="row" style="padding-bottom: 40px;">
+                            <div class="table-responsive" style="background-color: #fff;">
+                              <table class="table table-hover">
+                                <thead class="thead-dark">
+                                  <tr>
+                                    <th class="text-center">Id</th>
+                                    <th class="text-center">Title</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                        $limit = 5;  
+                                        if (isset($_GET["page"])) { 
+                                            $page  = $_GET["page"];
+                                            $count = ($page-1) * $limit; 
+                                        } else { 
+                                            $page = 1; 
+                                            $count = 0;
+                                        }  
+                                        $start_from = ($page-1) * $limit;  
+                                          
+                                        $query = "SELECT * FROM posts LIMIT $start_from, $limit";
+                                        $posts = mysqli_query($conn, $query);
+                                        while($row = mysqli_fetch_assoc($posts)){
+                                            $count = $count + 1;
+                                            $title = $row['title'];
+                                            $status = $row['status'];
+                                            $post_id = $row['id'];
+                                    ?>
+                                  <tr>
+                                    <td class="text-center"><?php echo $count; ?></td>
+                                    <td class="text-center" style="max-width: 450px;"><?php echo $title; ?></td>
+                                    <td class="text-center"><button class="btn <?php if($status == 'Approved') echo 'btn-success'; else if($status == 'Disapproved') echo 'btn-danger'; else echo 'btn-warning'; ?>"><?php echo $status; ?></button></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-primary" onclick="window.location.href='../view.php?id=<?php echo base64_encode($post_id); ?>';">View</button>
+                                        <button class="btn btn-info" onclick="window.location.href='edit.php?id=<?php echo base64_encode($post_id); ?>';">Edit</button>
+                                        <button class="btn btn-success" onclick="window.location.href='posts.php?page=<?php echo $page; ?>&approve=<?php echo $post_id; ?>';">Approve</button>
+                                        <button class="btn btn-danger" onclick="window.location.href='posts.php?page=<?php echo $page; ?>&disapprove=<?php echo $post_id; ?>';">Disapprove</button>
+                                    </td>
+                                  </tr>
+                                    <?php } ?>
+                                </tbody>
+                              </table>
                             </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c2">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-thumb-up"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $likes = 0; 
-                                                    while($row = mysqli_fetch_assoc($posts)){
-                                                        $likes += $row['likes'];
-                                                    }
-                                                    echo $likes;
-                                                ?></h2>
-                                                <span>Total Likes</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c3" >
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-comments"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM comments";
-                                                    $comments = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($comments);
-                                                ?></h2>
-                                                <span>Total Comments</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c4">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-account"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM users";
-                                                    $users = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($users);
-                                                ?></h2>
-                                                <span>Total Members</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row m-t-20" style="width: 100%;">    
-                                    <div class="row text-center" style="width: 100%;">
-                                        <div class="col-md-12">
-                                            <div class="copyright">
-                                                <p>Copyright © Blogie. All rights reserved.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <?php
+                                $sql = "SELECT * FROM posts";  
+                                $posts = mysqli_query($conn, $sql);  
+                                $post_count = mysqli_num_rows($posts);  
+                                $total_pages = ceil($post_count / $limit);  
+                                $pagLink = "<div class='pagination'>";  
+                                for ($i=1; $i<=$total_pages; $i++) {  
+                                    $pagLink .= "<a class='paglink' href='posts.php?page=".$i."'>".$i."</a>";  
+                                }  
+                                echo $pagLink . "</div>"; 
+                            ?>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- END MAIN CONTENT-->
-            <!-- END PAGE CONTAINER-->
-        </div>
-
+    </div>
     </div>
 
     <!-- Jquery JS-->
@@ -338,8 +320,8 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Vendor JS       -->
     <script src="vendor/slick/slick.min.js">
     </script>
-    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/animsition/animsition.min.js"></script>
+    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
     </script>
     <script src="vendor/counter-up/jquery.waypoints.min.js"></script>

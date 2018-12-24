@@ -3,6 +3,18 @@ include "../db.php";
 if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     echo "<script>window.location.href='/';</script>";
 } 
+if(isset($_GET['remove'])){
+    $cat_id = $_GET['remove'];
+    $query = "DELETE FROM category WHERE id = $cat_id";
+    $delete_cat = mysqli_query($conn, $query);
+    echo "<script>window.location.href='categories.php';</script>";
+}
+if(isset($_GET['add'])){
+    $category = $_GET['add'];
+    $query = "INSERT INTO category(category) VALUES('$category')";
+    $add_cat = mysqli_query($conn, $query);
+    echo "<script>window.location.href='categories.php';</script>";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +29,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
     <!-- Title Page-->
     <link rel="icon" href="http://pngimg.com/uploads/letter_b/letter_b_PNG13.png" sizes="16x16" type="image/png">
-    <title>Dashboard</title>
+    <title>Dashboard: Category Listing</title>
 
     <!-- Fontfaces CSS-->
     <link href="css/font-face.css" rel="stylesheet" media="all">
@@ -40,16 +52,18 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Main CSS-->
     <link href="css/theme.css" rel="stylesheet" media="all">
     <style>
-        .pager{
+        .pagination{
             margin-top: 30px;
-            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .page-number{
+        .paglink{
             margin: 0px 5px;
             cursor: pointer;
             padding: 10px 16px;
             background-color: lightgrey;
             border-radius: 5px;
+            color: black;
         }
         .table-responsive{
             height: 100%;
@@ -89,7 +103,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
 </head>
 
-<body class="animsition">
+<body>
 
 <div id="overlay">
     <div id="text" class="text-justify">
@@ -154,7 +168,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
             <div class="menu-sidebar__content js-scrollbar1">
                 <nav class="navbar-sidebar">
                     <ul class="list-unstyled navbar__list">
-                        <li class="active has-sub">
+                        <li class="has-sub">
                             <a href ="index.php" class="js-arrow">
                                 <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                         </li>
@@ -166,7 +180,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
                             <a href="users.php">
                                 <i class="zmdi zmdi-account"></i>Users Listing</a>
                         </li>
-                        <li>
+                        <li class="active">
                             <a href="categories.php">
                                 <i class="zmdi zmdi-view-list-alt"></i>Category Listing</a>
                         </li>
@@ -182,7 +196,6 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
         <!-- PAGE CONTAINER-->
         <div class="page-container" style="background-color: #f5f5f5;">
-            <!-- HEADER DESKTOP-->
             <header class="header-desktop" style="left: 251px;">
                 <div class="section__content section__content--p30">
                     <div class="container-fluid">
@@ -230,104 +243,50 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
                     <div class="container-fluid">
                         <div class="row" style="margin-bottom: 40px;">
                             <div class="col-md-12">
-                                <h2 class="text-center">Administration Dashboard : Overview</h2>
+                                <h2 class="text-center">Administration Dashboard : Category Listing</h2>
                             </div>
                         </div>
-                        <div class="row m-t-25">
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c1">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-calendar-note"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM posts";
-                                                    $posts = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($posts);
-                                                ?></h2>
-                                                <span>Total Posts</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="row" style="margin-bottom: 40px;">
+                            <div class="col-md-9">
+                                <input class="form-control" placeholder="Category Name ..." id="cat_name">
                             </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c2">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-thumb-up"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $likes = 0; 
-                                                    while($row = mysqli_fetch_assoc($posts)){
-                                                        $likes += $row['likes'];
-                                                    }
-                                                    echo $likes;
-                                                ?></h2>
-                                                <span>Total Likes</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-md-3">
+                                <button onclick="add_category();" class="btn btn-block btn-primary">Add Category</button>
                             </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c3" >
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix" >
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-comments"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM comments";
-                                                    $comments = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($comments);
-                                                ?></h2>
-                                                <span>Total Comments</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        </div>
+                        <div class="row" style="padding-bottom: 40px;">
+                            <div class="table-responsive" style="background-color: #fff;">
+                              <table class="table table-hover">
+                                <thead class="thead-dark">
+                                  <tr>
+                                    <th class="text-center">Id</th>
+                                    <th class="text-center">Category</th>
+                                    <th class="text-center">Remove</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                        $query = "SELECT * FROM category";
+                                        $categories = mysqli_query($conn, $query);
+                                        while($row = mysqli_fetch_assoc($categories)){
+                                            $count = $count + 1;
+                                            $cat_id = $row['id'];
+                                            $category = $row['category'];
+                                    ?>
+                                  <tr>
+                                    <td class="text-center"><?php echo $count; ?></td>
+                                    <td class="text-center"><?php echo $category; ?></td>
+                                    <td class="text-center"><button onclick="remove_category('<?php echo $cat_id; ?>');" class="btn btn-danger">Remove Category</button></td>
+                                  </tr>
+                                    <?php } ?>
+                                </tbody>
+                              </table>
                             </div>
-                            <div class="col-xs-12 col-md-6">
-                                <div class="overview-item overview-item--c4">
-                                    <div class="overview__inner" style="padding-bottom: 40px; padding-top: 20px;">
-                                        <div class="overview-box clearfix">
-                                            <div class="icon">
-                                                <i class="zmdi zmdi-account"></i>
-                                            </div>
-                                            <div class="text">
-                                                <h2><?php 
-                                                    $query = "SELECT * FROM users";
-                                                    $users = mysqli_query($conn, $query);
-                                                    echo mysqli_num_rows($users);
-                                                ?></h2>
-                                                <span>Total Members</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row m-t-20" style="width: 100%;">    
-                                    <div class="row text-center" style="width: 100%;">
-                                        <div class="col-md-12">
-                                            <div class="copyright">
-                                                <p>Copyright © Blogie. All rights reserved.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!-- END MAIN CONTENT-->
-            <!-- END PAGE CONTAINER-->
-        </div>
-
+    </div>
     </div>
 
     <!-- Jquery JS-->
@@ -338,8 +297,8 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <!-- Vendor JS       -->
     <script src="vendor/slick/slick.min.js">
     </script>
-    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/animsition/animsition.min.js"></script>
+    <script src="vendor/wow/wow.min.js"></script>
     <script src="vendor/bootstrap-progressbar/bootstrap-progressbar.min.js">
     </script>
     <script src="vendor/counter-up/jquery.waypoints.min.js"></script>
@@ -353,6 +312,15 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
 
     <!-- Main JS-->
     <script src="js/main.js"></script>
+    <script>
+        function remove_category(id){
+            window.location.href='categories.php?remove='+id;
+        }
+        function add_category(){
+            var cat = $("#cat_name").val();
+            window.location.href='categories.php?add='+cat;
+        }
+    </script>
 
 </body>
 
