@@ -20,7 +20,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <title>Dashboard</title>
 
     <!-- Fontfaces CSS-->
-    <link href="css/font-face.css" rel="stylesheet" media="all">
+    <link href="../dashboard/css/font-face.css" rel="stylesheet" media="all">
     <link href="vendor/font-awesome-4.7/css/font-awesome.min.css" rel="stylesheet" media="all">
     <link href="vendor/font-awesome-5/css/fontawesome-all.min.css" rel="stylesheet" media="all">
     <link href="vendor/mdi-font/css/material-design-iconic-font.min.css" rel="stylesheet" media="all">
@@ -38,7 +38,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     <link href="vendor/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" media="all">
 
     <!-- Main CSS-->
-    <link href="css/theme.css" rel="stylesheet" media="all">
+    <link href="../dashboard/css/theme.css" rel="stylesheet" media="all">
     <style>
         .pager{
             margin-top: 30px;
@@ -80,10 +80,6 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
             #overlay {
                 display: block;
             }
-        }
-
-        @media (min-width: 1200px) { 
-
         }
     </style>
 
@@ -352,7 +348,7 @@ if(!isset($_SESSION['id']) && $_SESSION['email'] != 'admin@mail.com'){
     </script>
 
     <!-- Main JS-->
-    <script src="js/main.js"></script>
+    <script src="../dashboard/js/main.js"></script>
 
 </body>
 
